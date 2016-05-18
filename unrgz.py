@@ -58,8 +58,6 @@ class Lexer(object):
         return FileToken(file_name, self._file, length)
 
     def _read_end(self):
-        end = self._read_string()
-        assert end == 'end', 'Invalid END token: %s' % end
         return EndToken()
 
     def _read_string(self):
@@ -139,7 +137,7 @@ class FileSystem(object):
 
     def _adopt_path(self, path):
         path = path.replace(ntpath.sep, os.path.sep)
-        path = os.path.join(self._root_path, path)
+        path = os.path.abspath(os.path.join(self._root_path, path))
 
         assert os.path.commonprefix([self._root_path, path]) == self._root_path, \
                 'Access out of root directory is forbidden: %s' % path
