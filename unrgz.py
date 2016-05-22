@@ -135,14 +135,33 @@ class FileSystem(object):
             for chunk in file:
                 dst_file.write(chunk)
 
-    def _adopt_path(self, path):
-        path = path.replace(ntpath.sep, os.path.sep)
-        path = os.path.abspath(os.path.join(self._root_path, path))
+    def _adopt_path(self, pathname):
+        pathname = pathname.replace(ntpath.sep, os.path.sep)
+        pathname = os.path.abspath(os.path.join(self._root_path, pathname))
 
-        assert os.path.commonprefix([self._root_path, path]) == self._root_path, \
-                'Access out of root directory is forbidden: %s' % path
+        assert os.path.commonprefix([self._root_path, pathname]) == self._root_path, \
+                'Access out of root directory is forbidden: %s' % pathname
 
-        return path
+        pathname = os.path.relpath(pathname, self._root_path)
+
+        target_path = []
+        while pathname:
+            head, tail = os.path.split(pathname)
+            if tail:
+                target_path.insert(0, tail)
+            pathname = head
+
+        host_path = []
+        while len(host_path) < len(target_path):
+            pathname = os.path.join(self._root_path, *host_path)
+            name = target_path[len(host_path)]
+            if os.path.isdir(pathname):
+                for existent_name in sorted(os.listdir(pathname)):
+                    if existent_name.lower() == name.lower():
+                        name = existent_name
+                        break
+            host_path.append(name)
+        return os.path.join(self._root_path, *host_path)
 
 
 if __name__ == '__main__':
